@@ -133,7 +133,7 @@ const peakNotificationSchema = new mongoose.Schema({
     read: { type: Boolean, default: false }
 }, { timestamps: true });
 
-const PeakNotification = mongoose.model("PeakNotification", peakNotificationSchema, "peak_notifications_doc");
+const PeakNotification = mongoose.model("PeakNotification", peakNotificationSchema, "peak_notifications_sand");
 
 // 2. Daily Diff Notifications
 const dailyDiffNotificationSchema = new mongoose.Schema({
@@ -159,7 +159,7 @@ const dailyDiffNotificationSchema = new mongoose.Schema({
     read: { type: Boolean, default: false }
 }, { timestamps: true });
 
-const DailyDiffNotification = mongoose.model("DailyDiffNotification", dailyDiffNotificationSchema, "daily_diff_notifications_doc");
+const DailyDiffNotification = mongoose.model("DailyDiffNotification", dailyDiffNotificationSchema, "daily_diff_notifications_sand");
 
 // 3. Test Notifications
 const testNotificationSchema = new mongoose.Schema({
@@ -169,7 +169,7 @@ const testNotificationSchema = new mongoose.Schema({
     read: { type: Boolean, default: false }
 }, { timestamps: true });
 
-const TestNotification = mongoose.model("TestNotification", testNotificationSchema, "test_notifications_doc");
+const TestNotification = mongoose.model("TestNotification", testNotificationSchema, "test_notifications_sand");
 
 const dailyBillNotificationSchema = new mongoose.Schema({
     title: { type: String, required: true },
@@ -183,7 +183,7 @@ const dailyBillNotificationSchema = new mongoose.Schema({
     read: { type: Boolean, default: false }
 }, { timestamps: true });
 
-const DailyBillNotification = mongoose.model("DailyBillNotification", dailyBillNotificationSchema, "daily_bill_notifications_doc");
+const DailyBillNotification = mongoose.model("DailyBillNotification", dailyBillNotificationSchema, "daily_bill_notifications_sand");
 
 // ================= Helper Functions =================
 function calculateBill(energyKwh, ratePerKwh = 4.4) {
