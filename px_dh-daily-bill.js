@@ -456,7 +456,9 @@ app.get('/daily-bill', async (req, res) => {
           // Use pm_sand and prefer active_power_total when available
           const data = await PM_sand.find({ timestamp: { $gte: start, $lte: end } })
             .sort({ timestamp: 1 })
-            .select('active_power_total timestamp');
+            .select('active_power_total timestamp')
+            .limit(10000)
+            .lean();
 
         if (!data.length) {
             return res.status(404).json({
@@ -618,7 +620,9 @@ app.get('/daily-diff', async (req, res) => {
           const { start, end } = getDayRangeUTC(dateStr);
           const dayData = await PM_sand.find({ timestamp: { $gte: start, $lte: end } })
                            .sort({ timestamp: 1 })
-                          .select('active_power_total timestamp');
+                           .select('active_power_total timestamp')
+                           .limit(10000)
+                           .lean();
 
           if (!dayData.length) return { energy_kwh: 0, samples: 0, electricity_bill: 0 };
 
@@ -688,7 +692,9 @@ app.get('/hourly-bill/:date', async (req, res) => {
 
         const data = await PM_sand.find({ timestamp: { $gte: start, $lte: end } })
               .sort({ timestamp: 1 })
-              .select('active_power_total timestamp');
+              .select('active_power_total timestamp')
+              .limit(10000)
+              .lean();
 
         const hourlyEnergy = Array.from({length:24}, ()=>0);
 
@@ -769,7 +775,8 @@ app.get('/minute-power-range', async (req, res) => {
         const data = await PM_sand.find({
             timestamp: { $gte: start, $lte: end }
         }).sort({ timestamp: 1 })
-          .select('timestamp active_power_total voltage current');
+          .select('timestamp active_power_total voltage current')
+          .lean();
 
         const result = data.map(d => ({
           timestamp: d.timestamp.toISOString(),
@@ -802,7 +809,7 @@ app.get('/hourly-summary', async (req, res) => {
 
         const data = await PM_sand.find({
           timestamp: { $gte: start, $lte: end }
-        }).sort({ timestamp: 1 }).select('timestamp active_power_total');
+        }).sort({ timestamp: 1 }).select('timestamp active_power_total').limit(10000).lean();
 
         const hourly = Array.from({ length: 24 }, (_, i) => ({
             hour: `${i.toString().padStart(2,'0')}:00`,
@@ -892,7 +899,7 @@ app.get('/solar-size', async (req, res) => {
 
         const data = await PM_sand.find({
           timestamp: { $gte: start, $lte: end }
-        }).sort({ timestamp: 1 }).select('timestamp active_power_total');
+        }).sort({ timestamp: 1 }).select('timestamp active_power_total').limit(10000).lean();
 
         if (!data.length) {
             return res.status(404).json({
@@ -995,7 +1002,7 @@ app.get('/raw-local', async (req, res) => {
 
     const data = await PM_sand.find({
       timestamp: { $gte: start, $lte: end }
-    }).sort({ timestamp: 1 });
+    }).sort({ timestamp: 1 }).lean();
 
     const totalPower = data.reduce((sum, d) => sum + docPower(d), 0);
 
@@ -1033,7 +1040,7 @@ app.get('/raw-08-09', async (req, res) => {
 
     const data = await PM_sand.find({
       timestamp: { $gte: start, $lte: end }
-    }).sort({ timestamp: 1 });
+    }).sort({ timestamp: 1 }).lean();
 
     const totalPower = data.reduce((sum, d) => sum + docPower(d), 0);
 
@@ -1077,7 +1084,8 @@ app.get('/diagnostics-range', async (req, res) => {
       }
     })
     .sort({ timestamp: 1 })
-    .select('timestamp active_power_total voltage current');
+    .select('timestamp active_power_total voltage current')
+    .lean();
 
     const result = data.map(d => ({
       _id: d._id,
@@ -1220,7 +1228,7 @@ let dailyPeak = { date: '', maxPower: 0 };
 
 async function checkDailyPeak() {
   try {
-    const latest = await PM_sand.findOne().sort({ timestamp: -1 }).select('active_power_total timestamp');
+const latest = await PM_sand.findOne().sort({ timestamp: -1 }).select('active_power_total timestamp').lean();
     if (!latest) return;
 
     const today = new Date().toISOString().split('T')[0];
@@ -1246,8 +1254,8 @@ async function checkDailyPeak() {
   }
 }
 
-// ตรวจสอบ peak ทุก 10 วินาที
-cron.schedule('*/10 * * * * *', () => {
+// ตรวจสอบ peak ทุก 1 นาที (ลด DB query จาก 8,640/วัน เหลือ 1,440/วัน)
+cron.schedule('* * * * *', () => {
   checkDailyPeak();
 });
 
@@ -1266,7 +1274,7 @@ async function sendDailyBillNotification() {
     const { start, end } = getDayRangeUTC(dateStr);
     const data = await PM_sand.find({ 
       timestamp: { $gte: start, $lte: end } 
-    }).sort({ timestamp: 1 }).select('active_power_total timestamp');
+    }).sort({ timestamp: 1 }).select('active_power_total timestamp').limit(10000).lean();
 
     if (!data.length) {
       console.log(`⚠️ No data found for ${dateStr}`);
